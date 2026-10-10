@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import Scribble
+@testable import SimpleScreenScribble
 
 struct ScribbleTests {
 

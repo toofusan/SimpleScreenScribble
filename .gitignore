@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode - user-specific
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad
+
+# Xcode - build output
+DerivedData/
+build/
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+# (KeyboardShortcuts はリモートSPM依存。Xcodeが自動解決する)
+# Package.resolved は他マシンで同一バージョンを再現するためコミットする（無視しない）
+.build/
+.swiftpm/
+
+# 生成物・雑多
+*.xccheckout
+*.xcscmblueprint

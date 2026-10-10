@@ -6,6 +6,11 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5CD348A430319158003A4DC1 /* CLAUDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 5CD348A330319150003A4DC1 /* CLAUDE.md */; };
+		5CD348AC3031B073003A4DC1 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = 5CD348AB3031B073003A4DC1 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		5CCF3D913031840B00BCD70A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,9 +29,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		5CCF3D813031840A00BCD70A /* Scribble.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Scribble.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		5CCF3D903031840B00BCD70A /* ScribbleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribbleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		5CCF3D9A3031840B00BCD70A /* ScribbleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ScribbleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CCF3D813031840A00BCD70A /* SimpleScreenScribble.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SimpleScreenScribble.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CCF3D903031840B00BCD70A /* SimpleScreenScribbleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleScreenScribbleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CCF3D9A3031840B00BCD70A /* SimpleScreenScribbleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SimpleScreenScribbleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		5CD348A330319150003A4DC1 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -52,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5CD348AC3031B073003A4DC1 /* KeyboardShortcuts in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,25 +86,34 @@
 				5CCF3D933031840B00BCD70A /* ScribbleTests */,
 				5CCF3D9D3031840B00BCD70A /* ScribbleUITests */,
 				5CCF3D823031840A00BCD70A /* Products */,
+				5CD348A330319150003A4DC1 /* CLAUDE.md */,
+				5CD348AA3031B073003A4DC1 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
 		5CCF3D823031840A00BCD70A /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				5CCF3D813031840A00BCD70A /* Scribble.app */,
-				5CCF3D903031840B00BCD70A /* ScribbleTests.xctest */,
-				5CCF3D9A3031840B00BCD70A /* ScribbleUITests.xctest */,
+				5CCF3D813031840A00BCD70A /* SimpleScreenScribble.app */,
+				5CCF3D903031840B00BCD70A /* SimpleScreenScribbleTests.xctest */,
+				5CCF3D9A3031840B00BCD70A /* SimpleScreenScribbleUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5CD348AA3031B073003A4DC1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		5CCF3D803031840A00BCD70A /* Scribble */ = {
+		5CCF3D803031840A00BCD70A /* SimpleScreenScribble */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5CCF3DA43031840B00BCD70A /* Build configuration list for PBXNativeTarget "Scribble" */;
+			buildConfigurationList = 5CCF3DA43031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribble" */;
 			buildPhases = (
 				5CCF3D7D3031840A00BCD70A /* Sources */,
 				5CCF3D7E3031840A00BCD70A /* Frameworks */,
@@ -110,16 +126,17 @@
 			fileSystemSynchronizedGroups = (
 				5CCF3D833031840A00BCD70A /* Scribble */,
 			);
-			name = Scribble;
+			name = SimpleScreenScribble;
 			packageProductDependencies = (
+				5CD348AB3031B073003A4DC1 /* KeyboardShortcuts */,
 			);
 			productName = Scribble;
-			productReference = 5CCF3D813031840A00BCD70A /* Scribble.app */;
+			productReference = 5CCF3D813031840A00BCD70A /* SimpleScreenScribble.app */;
 			productType = "com.apple.product-type.application";
 		};
-		5CCF3D8F3031840B00BCD70A /* ScribbleTests */ = {
+		5CCF3D8F3031840B00BCD70A /* SimpleScreenScribbleTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5CCF3DA73031840B00BCD70A /* Build configuration list for PBXNativeTarget "ScribbleTests" */;
+			buildConfigurationList = 5CCF3DA73031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribbleTests" */;
 			buildPhases = (
 				5CCF3D8C3031840B00BCD70A /* Sources */,
 				5CCF3D8D3031840B00BCD70A /* Frameworks */,
@@ -133,16 +150,16 @@
 			fileSystemSynchronizedGroups = (
 				5CCF3D933031840B00BCD70A /* ScribbleTests */,
 			);
-			name = ScribbleTests;
+			name = SimpleScreenScribbleTests;
 			packageProductDependencies = (
 			);
 			productName = ScribbleTests;
-			productReference = 5CCF3D903031840B00BCD70A /* ScribbleTests.xctest */;
+			productReference = 5CCF3D903031840B00BCD70A /* SimpleScreenScribbleTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		5CCF3D993031840B00BCD70A /* ScribbleUITests */ = {
+		5CCF3D993031840B00BCD70A /* SimpleScreenScribbleUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5CCF3DAA3031840B00BCD70A /* Build configuration list for PBXNativeTarget "ScribbleUITests" */;
+			buildConfigurationList = 5CCF3DAA3031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribbleUITests" */;
 			buildPhases = (
 				5CCF3D963031840B00BCD70A /* Sources */,
 				5CCF3D973031840B00BCD70A /* Frameworks */,
@@ -156,11 +173,11 @@
 			fileSystemSynchronizedGroups = (
 				5CCF3D9D3031840B00BCD70A /* ScribbleUITests */,
 			);
-			name = ScribbleUITests;
+			name = SimpleScreenScribbleUITests;
 			packageProductDependencies = (
 			);
 			productName = ScribbleUITests;
-			productReference = 5CCF3D9A3031840B00BCD70A /* ScribbleUITests.xctest */;
+			productReference = 5CCF3D9A3031840B00BCD70A /* SimpleScreenScribbleUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -186,7 +203,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 5CCF3D7C3031840A00BCD70A /* Build configuration list for PBXProject "Scribble" */;
+			buildConfigurationList = 5CCF3D7C3031840A00BCD70A /* Build configuration list for PBXProject "SimpleScreenScribble" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -195,14 +212,17 @@
 			);
 			mainGroup = 5CCF3D783031840A00BCD70A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5CD348A93031AC11003A4DC1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 5CCF3D823031840A00BCD70A /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				5CCF3D803031840A00BCD70A /* Scribble */,
-				5CCF3D8F3031840B00BCD70A /* ScribbleTests */,
-				5CCF3D993031840B00BCD70A /* ScribbleUITests */,
+				5CCF3D803031840A00BCD70A /* SimpleScreenScribble */,
+				5CCF3D8F3031840B00BCD70A /* SimpleScreenScribbleTests */,
+				5CCF3D993031840B00BCD70A /* SimpleScreenScribbleUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -212,6 +232,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5CD348A430319158003A4DC1 /* CLAUDE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -258,12 +279,12 @@
 /* Begin PBXTargetDependency section */
 		5CCF3D923031840B00BCD70A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5CCF3D803031840A00BCD70A /* Scribble */;
+			target = 5CCF3D803031840A00BCD70A /* SimpleScreenScribble */;
 			targetProxy = 5CCF3D913031840B00BCD70A /* PBXContainerItemProxy */;
 		};
 		5CCF3D9C3031840B00BCD70A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 5CCF3D803031840A00BCD70A /* Scribble */;
+			target = 5CCF3D803031840A00BCD70A /* SimpleScreenScribble */;
 			targetProxy = 5CCF3D9B3031840B00BCD70A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -322,6 +343,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
@@ -380,6 +402,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				INFOPLIST_KEY_LSUIElement = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -409,7 +432,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.Scribble;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribble;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -441,7 +464,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.Scribble;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribble;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -463,14 +486,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.ScribbleTests;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribbleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Scribble.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scribble";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SimpleScreenScribble.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SimpleScreenScribble";
 			};
 			name = Debug;
 		};
@@ -484,14 +507,14 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.ScribbleTests;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribbleTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Scribble.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Scribble";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SimpleScreenScribble.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SimpleScreenScribble";
 			};
 			name = Release;
 		};
@@ -503,7 +526,7 @@
 				DEVELOPMENT_TEAM = UJCU55Z884;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.ScribbleUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribbleUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -522,7 +545,7 @@
 				DEVELOPMENT_TEAM = UJCU55Z884;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = toofu.ScribbleUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = toofu.SimpleScreenScribbleUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -536,7 +559,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		5CCF3D7C3031840A00BCD70A /* Build configuration list for PBXProject "Scribble" */ = {
+		5CCF3D7C3031840A00BCD70A /* Build configuration list for PBXProject "SimpleScreenScribble" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5CCF3DA23031840B00BCD70A /* Debug */,
@@ -545,7 +568,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5CCF3DA43031840B00BCD70A /* Build configuration list for PBXNativeTarget "Scribble" */ = {
+		5CCF3DA43031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribble" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5CCF3DA53031840B00BCD70A /* Debug */,
@@ -554,7 +577,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5CCF3DA73031840B00BCD70A /* Build configuration list for PBXNativeTarget "ScribbleTests" */ = {
+		5CCF3DA73031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribbleTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5CCF3DA83031840B00BCD70A /* Debug */,
@@ -563,7 +586,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5CCF3DAA3031840B00BCD70A /* Build configuration list for PBXNativeTarget "ScribbleUITests" */ = {
+		5CCF3DAA3031840B00BCD70A /* Build configuration list for PBXNativeTarget "SimpleScreenScribbleUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				5CCF3DAB3031840B00BCD70A /* Debug */,
@@ -573,6 +596,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		5CD348A93031AC11003A4DC1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.0.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5CD348AB3031B073003A4DC1 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5CD348A93031AC11003A4DC1 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 5CCF3D793031840A00BCD70A /* Project object */;
 }
