@@ -57,10 +57,17 @@ final class ToolbarPanel: NSPanel, NSWindowDelegate {
 
     // MARK: - 表示準備
 
-    /// 表示前に内容へフィットさせ、ドック位置に合わせて配置する。
+    /// 表示前に内容へフィットさせ、作業中の画面（カーソルのある画面）へ配置する。
+    /// マルチディスプレイで前回別画面に置いたままだと見えないことがあるため、毎回引き寄せる。
     func prepareForShow() {
         resizeToFit()
-        reposition()
+        reposition(on: Self.activeScreen())
+    }
+
+    /// 作業対象の画面：カーソルのある画面を優先、無ければメイン。
+    private static func activeScreen() -> NSScreen? {
+        let mouse = NSEvent.mouseLocation
+        return NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
     }
 
     private func resizeToFit() {
@@ -69,21 +76,23 @@ final class ToolbarPanel: NSPanel, NSWindowDelegate {
         setContentSize(host.fittingSize)
     }
 
-    private func reposition() {
-        guard let screen = screen ?? NSScreen.main else { return }
+    /// 指定画面に合わせて配置する。現在位置がその画面の外なら未配置扱いにして中央下へ戻す。
+    private func reposition(on targetScreen: NSScreen?) {
+        guard let screen = targetScreen ?? NSScreen.main else { return }
         let visible = screen.visibleFrame
         var origin = frame.origin
+        let onScreen = visible.intersects(frame)
 
         switch dockEdge {
         case .left:
             origin.x = visible.minX + dockMargin
-            origin.y = clampY(origin.y, in: visible)
+            origin.y = onScreen ? clampY(origin.y, in: visible) : visible.midY - frame.height / 2
         case .right:
             origin.x = visible.maxX - frame.width - dockMargin
-            origin.y = clampY(origin.y, in: visible)
+            origin.y = onScreen ? clampY(origin.y, in: visible) : visible.midY - frame.height / 2
         case .none:
-            // 中央下（初回や中央に置いたとき）
-            if origin == .zero {
+            // 中央下（初回・未配置・対象画面外のとき）
+            if origin == .zero || !onScreen {
                 origin.x = visible.midX - frame.width / 2
                 origin.y = visible.minY + 32
             } else {
@@ -160,8 +169,10 @@ final class ToolbarPanel: NSPanel, NSWindowDelegate {
             DrawingState.shared.isToolbarVertical = wantVertical
         }
         DispatchQueue.main.async { [weak self] in
-            self?.resizeToFit()
-            self?.reposition()
+            guard let self else { return }
+            self.resizeToFit()
+            // 落とした位置（カーソルのある画面）を基準にスナップする。
+            self.reposition(on: Self.activeScreen())
         }
     }
 }
