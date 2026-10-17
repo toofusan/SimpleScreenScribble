@@ -16,6 +16,7 @@ enum ToolKind: String, CaseIterable, Identifiable {
     case pen
     case text
     case arrow
+    case line
     case rect
 
     var id: Self { self }
@@ -26,6 +27,7 @@ enum ToolKind: String, CaseIterable, Identifiable {
         case .pen: return "Draw"
         case .text: return "Text"
         case .arrow: return "Arrow"
+        case .line: return "Line"
         case .rect: return "Rectangle"
         }
     }
@@ -36,6 +38,7 @@ enum ToolKind: String, CaseIterable, Identifiable {
         case .pen: return "pencil.tip"
         case .text: return "textformat"
         case .arrow: return "arrow.up.right"
+        case .line: return "line.diagonal"
         case .rect: return "rectangle"
         }
     }
@@ -47,6 +50,7 @@ enum ToolKind: String, CaseIterable, Identifiable {
         case .pen: return "d"
         case .text: return "t"
         case .arrow: return "a"
+        case .line: return "l"
         case .rect: return "r"
         }
     }

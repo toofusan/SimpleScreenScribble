@@ -149,15 +149,15 @@ final class OverlayView: NSView, NSTextViewDelegate {
         guard !indices.isEmpty else { return }
         let single = indices.count == 1
 
-        // 個々の選択枠（単一の矢印は端点だけ見せる）
+        // 個々の選択枠（単一の矢印・直線は端点だけ見せる）
         for index in indices {
-            if single, case .arrow = annotations[index] { continue }
+            if single, endpoints(of: annotations[index]) != nil { continue }
             strokeDashed(annotations[index].boundingBox, color: .systemBlue)
         }
 
         if single, let index = indices.first {
             let annotation = annotations[index]
-            if case let .arrow(from, to, _, _) = annotation {
+            if let (from, to) = endpoints(of: annotation) {
                 drawHandle(at: from)
                 drawHandle(at: to)
             } else {
@@ -202,6 +202,12 @@ final class OverlayView: NSView, NSTextViewDelegate {
             if let start = shapeStart, let current = shapeCurrent,
                hypot(current.x - start.x, current.y - start.y) > 2 {
                 return .arrow(from: start, to: current, color: strokeColor, width: strokeWidth)
+            }
+            return nil
+        case .line:
+            if let start = shapeStart, let current = shapeCurrent,
+               hypot(current.x - start.x, current.y - start.y) > 2 {
+                return .line(from: start, to: current, color: strokeColor, width: strokeWidth)
             }
             return nil
         case .rect:
@@ -295,7 +301,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .pen:
             currentStroke = [point]
             needsDisplay = true
-        case .arrow, .rect:
+        case .arrow, .line, .rect:
             shapeStart = point
             shapeCurrent = point
             needsDisplay = true
@@ -315,7 +321,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .pen:
             currentStroke.append(point)
             needsDisplay = true
-        case .arrow, .rect:
+        case .arrow, .line, .rect:
             shapeCurrent = point
             needsDisplay = true
         case .text:
@@ -356,6 +362,10 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .arrow:
             if moved, let start = shapeStart, let current = shapeCurrent {
                 mutate { annotations.append(.arrow(from: start, to: current, color: strokeColor, width: strokeWidth)) }
+            }
+        case .line:
+            if moved, let start = shapeStart, let current = shapeCurrent {
+                mutate { annotations.append(.line(from: start, to: current, color: strokeColor, width: strokeWidth)) }
             }
         case .rect:
             if moved, let start = shapeStart, let current = shapeCurrent {
@@ -414,7 +424,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
         let indices = selection.filter { annotations.indices.contains($0) }
         if indices.count == 1, let index = indices.first {
             let annotation = annotations[index]
-            if case let .arrow(from, to, _, _) = annotation {
+            if let (from, to) = endpoints(of: annotation) {
                 if handleContains(center: to, point: point) {
                     gestureSnapshot = annotations
                     selectDrag = .arrowEndpoint(index: index, movingTo: true, original: annotation)
@@ -480,10 +490,18 @@ final class OverlayView: NSView, NSTextViewDelegate {
             needsDisplay = true
 
         case let .arrowEndpoint(index, movingTo, original):
-            guard case let .arrow(from, to, color, width) = original else { break }
-            annotations[index] = movingTo
-                ? .arrow(from: from, to: point, color: color, width: width)
-                : .arrow(from: point, to: to, color: color, width: width)
+            switch original {
+            case let .arrow(from, to, color, width):
+                annotations[index] = movingTo
+                    ? .arrow(from: from, to: point, color: color, width: width)
+                    : .arrow(from: point, to: to, color: color, width: width)
+            case let .line(from, to, color, width):
+                annotations[index] = movingTo
+                    ? .line(from: from, to: point, color: color, width: width)
+                    : .line(from: point, to: to, color: color, width: width)
+            default:
+                break
+            }
             needsDisplay = true
 
         case let .marquee(start):
@@ -784,6 +802,16 @@ final class OverlayView: NSView, NSTextViewDelegate {
     }
 
     // MARK: - Hit testing / geometry
+
+    /// 矢印・直線の2端点（端点ハンドルの共通処理用）。それ以外は nil。
+    private func endpoints(of annotation: Annotation) -> (from: CGPoint, to: CGPoint)? {
+        switch annotation {
+        case let .arrow(from, to, _, _), let .line(from, to, _, _):
+            return (from, to)
+        default:
+            return nil
+        }
+    }
 
     private func annotationIndex(at point: CGPoint) -> Int? {
         for index in annotations.indices.reversed() where annotations[index].hitTest(point, tolerance: hitTolerance) {

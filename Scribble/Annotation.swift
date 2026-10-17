@@ -57,6 +57,7 @@ enum Annotation {
     case freehand(points: [CGPoint], color: NSColor, width: CGFloat)
     case text(TextItem)
     case arrow(from: CGPoint, to: CGPoint, color: NSColor, width: CGFloat)
+    case line(from: CGPoint, to: CGPoint, color: NSColor, width: CGFloat)
     case rect(CGRect, color: NSColor, width: CGFloat, filled: Bool)
 }
 
@@ -77,7 +78,7 @@ extension Annotation {
                 .insetBy(dx: -width / 2 - 2, dy: -width / 2 - 2)
         case let .text(item):
             return item.boundingRect()
-        case let .arrow(from, to, _, width):
+        case let .arrow(from, to, _, width), let .line(from, to, _, width):
             return CGRect(x: min(from.x, to.x), y: min(from.y, to.y),
                           width: abs(to.x - from.x), height: abs(to.y - from.y))
                 .insetBy(dx: -width / 2 - 2, dy: -width / 2 - 2)
@@ -97,7 +98,7 @@ extension Annotation {
             return false
         case let .text(item):
             return item.boundingRect().contains(point)
-        case let .arrow(from, to, _, width):
+        case let .arrow(from, to, _, width), let .line(from, to, _, width):
             return distanceToSegment(point, from, to) <= tolerance + width / 2
         case let .rect(rect, _, width, filled):
             if filled { return rect.insetBy(dx: -width / 2, dy: -width / 2).contains(point) }
@@ -118,6 +119,8 @@ extension Annotation {
             return .text(item)
         case let .arrow(from, to, _, _):
             return .arrow(from: from, to: to, color: color, width: width)
+        case let .line(from, to, _, _):
+            return .line(from: from, to: to, color: color, width: width)
         case let .rect(rect, _, _, _):
             return .rect(rect, color: color, width: width, filled: filled)
         }
@@ -136,6 +139,8 @@ extension Annotation {
             return .freehand(points: points.map(map), color: color, width: width)
         case let .arrow(from, to, color, width):
             return .arrow(from: map(from), to: map(to), color: color, width: width)
+        case let .line(from, to, color, width):
+            return .line(from: map(from), to: map(to), color: color, width: width)
         case let .rect(rect, color, width, filled):
             let p1 = map(CGPoint(x: rect.minX, y: rect.minY))
             let p2 = map(CGPoint(x: rect.maxX, y: rect.maxY))
@@ -165,6 +170,10 @@ extension Annotation {
             return .arrow(from: CGPoint(x: from.x + delta.width, y: from.y + delta.height),
                           to: CGPoint(x: to.x + delta.width, y: to.y + delta.height),
                           color: color, width: width)
+        case let .line(from, to, color, width):
+            return .line(from: CGPoint(x: from.x + delta.width, y: from.y + delta.height),
+                         to: CGPoint(x: to.x + delta.width, y: to.y + delta.height),
+                         color: color, width: width)
         case let .rect(rect, color, width, filled):
             return .rect(rect.offsetBy(dx: delta.width, dy: delta.height), color: color, width: width, filled: filled)
         }
@@ -199,6 +208,8 @@ enum AnnotationRenderer {
                 drawText(item)
             case let .arrow(from, to, color, width):
                 drawArrow(from: from, to: to, color: color, width: width)
+            case let .line(from, to, color, width):
+                drawLine(from: from, to: to, color: color, width: width)
             case let .rect(rect, color, width, filled):
                 drawRect(rect, color: color, width: width, filled: filled)
             }
@@ -253,6 +264,16 @@ enum AnnotationRenderer {
         head.line(to: right)
         head.close()
         head.fill()
+    }
+
+    private static func drawLine(from: CGPoint, to: CGPoint, color: NSColor, width: CGFloat) {
+        color.setStroke()
+        let path = NSBezierPath()
+        path.lineWidth = width
+        path.lineCapStyle = .round
+        path.move(to: from)
+        path.line(to: to)
+        path.stroke()
     }
 
     private static func drawRect(_ rect: CGRect, color: NSColor, width: CGFloat, filled: Bool) {
