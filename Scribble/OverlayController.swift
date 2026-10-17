@@ -83,18 +83,31 @@ final class OverlayController {
 
     // MARK: - Undo / Clear（ツールバー・メニューから）
 
-    func undo() { activeOverlayView?.undo() }
-    func redo() { activeOverlayView?.redo() }
+    func undo() { targetOverlayView?.undo() }
+    func redo() { targetOverlayView?.redo() }
     func clearAll() { overlayViews.forEach { $0.clear() } }
 
+    /// 最後に操作されたディスプレイのビューを覚えておく（undo/redoの対象決定用）。
+    /// マルチディスプレイでは常に最初のパネルがキーになるため、キーウィンドウ基準だと
+    /// 別ディスプレイに描いたものを undo できない。
+    func noteActive(_ view: OverlayView) {
+        lastActiveView = view
+    }
+
     // MARK: - Private
+
+    private weak var lastActiveView: OverlayView?
 
     private var overlayViews: [OverlayView] {
         panels.map(\.overlayView)
     }
 
-    private var activeOverlayView: OverlayView? {
-        panels.first(where: { $0.isKeyWindow })?.overlayView ?? panels.first?.overlayView
+    /// undo/redo の対象：直近に操作したビュー。無効ならキーウィンドウ→先頭にフォールバック。
+    private var targetOverlayView: OverlayView? {
+        if let view = lastActiveView, overlayViews.contains(where: { $0 === view }) {
+            return view
+        }
+        return panels.first(where: { $0.isKeyWindow })?.overlayView ?? panels.first?.overlayView
     }
 
     private func setMode(_ newMode: Mode) {

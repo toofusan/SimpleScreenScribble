@@ -238,7 +238,12 @@ final class OverlayView: NSView, NSTextViewDelegate {
         let chars = event.charactersIgnoringModifiers?.lowercased()
 
         if editor == nil, event.modifierFlags.contains(.command), chars == "z" {
-            if event.modifierFlags.contains(.shift) { redo() } else { undo() }
+            // コントローラ経由にして、別ディスプレイで操作した履歴も対象にする。
+            if event.modifierFlags.contains(.shift) {
+                OverlayController.shared.redo()
+            } else {
+                OverlayController.shared.undo()
+            }
             return
         }
 
@@ -302,6 +307,8 @@ final class OverlayView: NSView, NSTextViewDelegate {
     // MARK: - Mouse
 
     override func mouseDown(with event: NSEvent) {
+        // このディスプレイが最後に操作された＝undo/redoの対象になるよう記録。
+        OverlayController.shared.noteActive(self)
         let point = convert(event.locationInWindow, from: nil)
         downPoint = point
         suppressStroke = false
