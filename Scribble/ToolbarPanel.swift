@@ -329,11 +329,33 @@ struct ToolbarView: View {
 
             Divider().fixedSize()
 
-            // 太さ
-            adaptiveSlider($state.lineWidth, in: 1...20, icon: "lineweight")
+            // 太さ（アイコンをクリックすると線スタイル選択メニューが出る）
+            adaptiveSlider($state.lineWidth, in: 1...20) {
+                Menu {
+                    ForEach(DashStyle.allCases) { s in
+                        Button {
+                            state.dashStyle = s
+                        } label: {
+                            if state.dashStyle == s {
+                                Label(s.label, systemImage: "checkmark")
+                            } else {
+                                Text(s.label)
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "lineweight")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .toolbarTooltip("Line Style (Arrow / Line / Rectangle)")
+            }
 
             // 不透明度
-            adaptiveSlider($state.opacity, in: 0.1...1.0, icon: "circle.lefthalf.filled")
+            adaptiveSlider($state.opacity, in: 0.1...1.0) {
+                Image(systemName: "circle.lefthalf.filled")
+            }
 
             // 矩形の塗り
             Toggle(isOn: $state.rectFilled) {
@@ -375,19 +397,20 @@ struct ToolbarView: View {
     }
 
     /// 太さ・不透明度スライダー。縦レイアウトでは自前の縦スライダーにして幅を詰める。
+    /// 先頭アイコンは呼び出し側がビルドする（静的アイコンにもボタンにもできる）。
     @ViewBuilder
-    private func adaptiveSlider<V>(_ value: Binding<V>,
-                                   in range: ClosedRange<V>,
-                                   icon: String) -> some View
+    private func adaptiveSlider<V, Leading: View>(_ value: Binding<V>,
+                                                  in range: ClosedRange<V>,
+                                                  @ViewBuilder leading: () -> Leading) -> some View
     where V: BinaryFloatingPoint, V.Stride: BinaryFloatingPoint {
         if isVertical {
             VStack(spacing: 6) {
-                Image(systemName: icon)
+                leading()
                 VerticalSlider(value: value, range: range)
             }
         } else {
             HStack(spacing: 6) {
-                Image(systemName: icon)
+                leading()
                 Slider(value: value, in: range)
                     .frame(width: 70)
             }

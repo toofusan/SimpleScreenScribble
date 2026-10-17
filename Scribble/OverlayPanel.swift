@@ -113,6 +113,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
     private var tool: ToolKind { DrawingState.shared.tool }
     private var strokeColor: NSColor { DrawingState.shared.nsColor }
     private var strokeWidth: CGFloat { DrawingState.shared.lineWidth }
+    private var strokeDash: DashStyle { DrawingState.shared.dashStyle }
 
     private var pad: CGFloat { Layout.textPadding }
     private let handleSize: CGFloat = 12
@@ -210,20 +211,20 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .arrow:
             if let start = shapeStart, let current = shapeCurrent,
                hypot(current.x - start.x, current.y - start.y) > 2 {
-                return .arrow(from: start, to: current, color: strokeColor, width: strokeWidth)
+                return .arrow(from: start, to: current, color: strokeColor, width: strokeWidth, dash: strokeDash)
             }
             return nil
         case .line:
             if let start = shapeStart, let current = shapeCurrent,
                hypot(current.x - start.x, current.y - start.y) > 2 {
-                return .line(from: start, to: current, color: strokeColor, width: strokeWidth)
+                return .line(from: start, to: current, color: strokeColor, width: strokeWidth, dash: strokeDash)
             }
             return nil
         case .rect:
             if let start = shapeStart, let current = shapeCurrent {
                 let rect = rectBetween(start, current)
                 if rect.width > 1 || rect.height > 1 {
-                    return .rect(rect, color: strokeColor, width: strokeWidth, filled: DrawingState.shared.rectFilled)
+                    return .rect(rect, color: strokeColor, width: strokeWidth, filled: DrawingState.shared.rectFilled, dash: strokeDash)
                 }
             }
             return nil
@@ -400,19 +401,19 @@ final class OverlayView: NSView, NSTextViewDelegate {
             }
         case .arrow:
             if moved, let start = shapeStart, let current = shapeCurrent {
-                mutate { annotations.append(.arrow(from: start, to: current, color: strokeColor, width: strokeWidth)) }
+                mutate { annotations.append(.arrow(from: start, to: current, color: strokeColor, width: strokeWidth, dash: strokeDash)) }
                 selectJustCreated()
             }
         case .line:
             if moved, let start = shapeStart, let current = shapeCurrent {
-                mutate { annotations.append(.line(from: start, to: current, color: strokeColor, width: strokeWidth)) }
+                mutate { annotations.append(.line(from: start, to: current, color: strokeColor, width: strokeWidth, dash: strokeDash)) }
                 selectJustCreated()
             }
         case .rect:
             if moved, let start = shapeStart, let current = shapeCurrent {
                 let rect = rectBetween(start, current)
                 let filled = DrawingState.shared.rectFilled
-                mutate { annotations.append(.rect(rect, color: strokeColor, width: strokeWidth, filled: filled)) }
+                mutate { annotations.append(.rect(rect, color: strokeColor, width: strokeWidth, filled: filled, dash: strokeDash)) }
                 selectJustCreated()
             }
         case .text:
@@ -543,14 +544,14 @@ final class OverlayView: NSView, NSTextViewDelegate {
 
         case let .arrowEndpoint(index, movingTo, original):
             switch original {
-            case let .arrow(from, to, color, width):
+            case let .arrow(from, to, color, width, dash):
                 annotations[index] = movingTo
-                    ? .arrow(from: from, to: point, color: color, width: width)
-                    : .arrow(from: point, to: to, color: color, width: width)
-            case let .line(from, to, color, width):
+                    ? .arrow(from: from, to: point, color: color, width: width, dash: dash)
+                    : .arrow(from: point, to: to, color: color, width: width, dash: dash)
+            case let .line(from, to, color, width, dash):
                 annotations[index] = movingTo
-                    ? .line(from: from, to: point, color: color, width: width)
-                    : .line(from: point, to: to, color: color, width: width)
+                    ? .line(from: from, to: point, color: color, width: width, dash: dash)
+                    : .line(from: point, to: to, color: color, width: width, dash: dash)
             default:
                 break
             }
@@ -689,8 +690,8 @@ final class OverlayView: NSView, NSTextViewDelegate {
                 item.origin = CGPoint(x: newBox.minX + pad, y: newBox.maxY - pad)
             }
             return .text(item)
-        case let .rect(_, color, width, filled):
-            return .rect(newBox.insetBy(dx: width / 2, dy: width / 2), color: color, width: width, filled: filled)
+        case let .rect(_, color, width, filled, dash):
+            return .rect(newBox.insetBy(dx: width / 2, dy: width / 2), color: color, width: width, filled: filled, dash: dash)
         default:
             return annotation.scaled(from: oldBox, to: newBox)
         }
@@ -891,7 +892,8 @@ final class OverlayView: NSView, NSTextViewDelegate {
             annotations[index] = annotations[index].withAppearance(
                 color: DrawingState.shared.nsColor,
                 width: DrawingState.shared.lineWidth,
-                filled: DrawingState.shared.rectFilled
+                filled: DrawingState.shared.rectFilled,
+                dash: DrawingState.shared.dashStyle
             )
         }
         needsDisplay = true
@@ -902,7 +904,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
     /// 矢印・直線の2端点（端点ハンドルの共通処理用）。それ以外は nil。
     private func endpoints(of annotation: Annotation) -> (from: CGPoint, to: CGPoint)? {
         switch annotation {
-        case let .arrow(from, to, _, _), let .line(from, to, _, _):
+        case let .arrow(from, to, _, _, _), let .line(from, to, _, _, _):
             return (from, to)
         default:
             return nil

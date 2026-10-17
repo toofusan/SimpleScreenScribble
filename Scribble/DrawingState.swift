@@ -56,6 +56,32 @@ enum ToolKind: String, CaseIterable, Identifiable {
     }
 }
 
+/// 線のスタイル（矢印・直線に適用）
+enum DashStyle: String, CaseIterable, Identifiable {
+    case solid
+    case dashed
+    case dotted
+
+    var id: Self { self }
+
+    var label: String {
+        switch self {
+        case .solid: return "Solid"
+        case .dashed: return "Dashed"
+        case .dotted: return "Dotted"
+        }
+    }
+
+    /// 線幅に応じた破線パターン。ソリッドは空配列。
+    func dashPattern(width: CGFloat) -> [CGFloat] {
+        switch self {
+        case .solid: return []
+        case .dashed: return [max(width * 2.5, 4), max(width * 2, 3)]
+        case .dotted: return [0.01, max(width * 2, 3)]   // 0長＋丸キャップで点
+        }
+    }
+}
+
 @MainActor
 @Observable
 final class DrawingState {
@@ -69,6 +95,7 @@ final class DrawingState {
         static let fontSize = "DrawingState.fontSize"
         static let opacity = "DrawingState.opacity"
         static let rectFilled = "DrawingState.rectFilled"
+        static let dashStyle = "DrawingState.dashStyle"
     }
 
     private let defaults = UserDefaults.standard
@@ -111,6 +138,13 @@ final class DrawingState {
             onAppearanceChange?()
         }
     }
+    /// 線のスタイル（矢印・直線）
+    var dashStyle: DashStyle = .solid {
+        didSet {
+            defaults.set(dashStyle.rawValue, forKey: Key.dashStyle)
+            onAppearanceChange?()
+        }
+    }
     /// ツールバーを縦向きにするか（左右端にドックしたとき）
     var isToolbarVertical: Bool = false
 
@@ -141,6 +175,9 @@ final class DrawingState {
         }
         if defaults.object(forKey: Key.rectFilled) != nil {
             rectFilled = defaults.bool(forKey: Key.rectFilled)
+        }
+        if let raw = defaults.string(forKey: Key.dashStyle), let saved = DashStyle(rawValue: raw) {
+            dashStyle = saved
         }
     }
 }
