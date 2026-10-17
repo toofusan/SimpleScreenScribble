@@ -80,9 +80,18 @@ final class OverlayView: NSView, NSTextViewDelegate {
     private var downPoint: CGPoint = .zero
     private var suppressStroke = false
 
+    /// 選択ドラッグ（移動・リサイズ・端点編集・マーキー）が進行中か。
+    /// オブジェクトツール中でも選択編集を優先させるために使う。
+    private var isSelectDragging: Bool {
+        if case .none = selectDrag { return false }
+        return true
+    }
+
     // ドラッグ状態
     private var textDrag: TextDrag = .none
     private var textDragRect: CGRect?
+    /// テキスト本体をつかんだとき：ドラッグなら移動、クリック（移動なし）なら編集。mouseUpで判定する。
+    private var pendingTextEdit: (index: Int, caret: CGPoint)?
     private var selectDrag: SelectDrag = .none
     private var gestureSnapshot: [Annotation]?
     // 選択オブジェクトへの外観変更（色/不透明度/太さ）のUndoをまとめるためのフラグ
@@ -302,6 +311,10 @@ final class OverlayView: NSView, NSTextViewDelegate {
             currentStroke = [point]
             needsDisplay = true
         case .arrow, .line, .rect:
+            // 直前に作ったオブジェクトのハンドル／本体をつかんだら、その編集を優先する。
+            if beginSelectionEditIfHit(point, allowBodyMove: true) { break }
+            // 何もない所なら選択を解除して新規作成へ。
+            selection = []
             shapeStart = point
             shapeCurrent = point
             needsDisplay = true
@@ -316,6 +329,12 @@ final class OverlayView: NSView, NSTextViewDelegate {
     override func mouseDragged(with event: NSEvent) {
         guard !suppressStroke else { return }
         let point = convert(event.locationInWindow, from: nil)
+
+        // オブジェクトツール中でも選択編集が始まっていればそちらを優先。
+        if isSelectDragging {
+            selectMouseDragged(point)
+            return
+        }
 
         switch tool {
         case .pen:
@@ -347,11 +366,24 @@ final class OverlayView: NSView, NSTextViewDelegate {
             textDragRect = nil
             selectDrag = .none
             marqueeRect = nil
+            pendingTextEdit = nil
         }
         if suppressStroke { return }
 
         let up = convert(event.locationInWindow, from: nil)
         let moved = hypot(up.x - downPoint.x, up.y - downPoint.y) > 4
+
+        // オブジェクトツール中でも選択編集が進行中ならそちらを確定させる。
+        if isSelectDragging {
+            // テキスト本体をクリック（移動なし）したら再編集を開始する。
+            if !moved, let pending = pendingTextEdit {
+                gestureSnapshot = nil
+                beginEditingExisting(index: pending.index, caretAt: pending.caret)
+                return
+            }
+            selectMouseUp(moved: moved)
+            return
+        }
 
         switch tool {
         case .pen:
@@ -362,16 +394,19 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .arrow:
             if moved, let start = shapeStart, let current = shapeCurrent {
                 mutate { annotations.append(.arrow(from: start, to: current, color: strokeColor, width: strokeWidth)) }
+                selectJustCreated()
             }
         case .line:
             if moved, let start = shapeStart, let current = shapeCurrent {
                 mutate { annotations.append(.line(from: start, to: current, color: strokeColor, width: strokeWidth)) }
+                selectJustCreated()
             }
         case .rect:
             if moved, let start = shapeStart, let current = shapeCurrent {
                 let rect = rectBetween(start, current)
                 let filled = DrawingState.shared.rectFilled
                 mutate { annotations.append(.rect(rect, color: strokeColor, width: strokeWidth, filled: filled)) }
+                selectJustCreated()
             }
         case .text:
             textMouseUp(moved: moved)
@@ -388,11 +423,21 @@ final class OverlayView: NSView, NSTextViewDelegate {
             suppressStroke = true
             return
         }
+        // 選択中テキストのハンドルをつかんだらリサイズ（本体移動は下で独自処理）。
+        if beginSelectionEditIfHit(point, allowBodyMove: false) { return }
+
         if let index = textIndex(at: point) {
-            beginEditingExisting(index: index, caretAt: point)
-            suppressStroke = true
+            // 本体：ドラッグで移動／クリック（移動なし）で再編集。判定は mouseUp で行う。
+            selection = [index]
+            gestureSnapshot = annotations
+            selectDrag = .move(start: point, originals: [index: annotations[index]])
+            pendingTextEdit = (index, point)
+            needsDisplay = true
             return
         }
+
+        // 新規作成
+        selection = []
         textDrag = .newText
         textDragRect = CGRect(origin: point, size: .zero)
         needsDisplay = true
@@ -527,6 +572,47 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .none:
             break
         }
+    }
+
+    /// 直前に作ったオブジェクト（配列末尾）を選択状態にする。
+    private func selectJustCreated() {
+        guard !annotations.isEmpty else { return }
+        selection = [annotations.count - 1]
+        needsDisplay = true
+    }
+
+    /// オブジェクトツール中に、選択済みオブジェクトのハンドル／端点／本体をつかんだら
+    /// その編集（リサイズ・端点移動・移動）を開始する。消費したら true。
+    /// `allowBodyMove` が false のときは本体ドラッグ移動を開始しない（テキストは本体を独自処理するため）。
+    private func beginSelectionEditIfHit(_ point: CGPoint, allowBodyMove: Bool = true) -> Bool {
+        let indices = selection.filter { annotations.indices.contains($0) }
+        guard indices.count == 1, let index = indices.first else { return false }
+        let annotation = annotations[index]
+
+        if let (from, to) = endpoints(of: annotation) {
+            if handleContains(center: to, point: point) {
+                gestureSnapshot = annotations
+                selectDrag = .arrowEndpoint(index: index, movingTo: true, original: annotation)
+                return true
+            }
+            if handleContains(center: from, point: point) {
+                gestureSnapshot = annotations
+                selectDrag = .arrowEndpoint(index: index, movingTo: false, original: annotation)
+                return true
+            }
+        } else if let handle = handleHit(box: annotation.boundingBox, point: point) {
+            gestureSnapshot = annotations
+            selectDrag = .resize(handle: handle, originalBox: annotation.boundingBox, originals: [index: annotation])
+            return true
+        }
+
+        // 本体 → 移動
+        if allowBodyMove, annotation.hitTest(point, tolerance: hitTolerance) {
+            gestureSnapshot = annotations
+            selectDrag = .move(start: point, originals: [index: annotation])
+            return true
+        }
+        return false
     }
 
     private func deleteSelection() {
@@ -707,10 +793,13 @@ final class OverlayView: NSView, NSTextViewDelegate {
             )
             annotations.append(.text(item))
             didChange = true
+            // 作成・再編集の直後は、その注釈を選択状態にする（矩形などと同じ挙動）。
+            selection = [annotations.count - 1]
         } else if commit && trimmed.isEmpty && wasExisting {
             didChange = true
         } else if !commit, let original = editingOriginalItem {
             annotations.append(.text(original))
+            selection = [annotations.count - 1]
         }
 
         if didChange, let snapshot = editSnapshot {
