@@ -122,6 +122,28 @@ final class OverlayView: NSView, NSTextViewDelegate {
 
     override var acceptsFirstResponder: Bool { true }
 
+    /// トグル直後のまだキーになり切れていない瞬間でも、最初のクリックを
+    /// アクティブ化で飲み込まず、そのまま描画ドラッグとして処理する。
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    /// ⌘Z / ⌘⇧Z はファーストレスポンダ状態に依存せず、パネルがキーなら必ず
+    /// ここで消費する。責任チェーンを上って SwiftUI/AppKit 側の UndoManager に
+    /// 渡してしまうとクラッシュすることがあるため、確実に横取りする。
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        // テキスト編集中は標準のテキスト取り消しに任せる。
+        guard editor == nil,
+              event.modifierFlags.contains(.command),
+              event.charactersIgnoringModifiers?.lowercased() == "z" else {
+            return super.performKeyEquivalent(with: event)
+        }
+        if event.modifierFlags.contains(.shift) {
+            OverlayController.shared.redo()
+        } else {
+            OverlayController.shared.undo()
+        }
+        return true
+    }
+
     // MARK: - Draw
 
     override func draw(_ dirtyRect: NSRect) {
@@ -346,8 +368,14 @@ final class OverlayView: NSView, NSTextViewDelegate {
 
         switch tool {
         case .pen:
+            // 追加された線分の矩形だけを再描画する（全面再描画を避ける）。
+            let previous = currentStroke.last
             currentStroke.append(point)
-            needsDisplay = true
+            if let previous {
+                setNeedsDisplay(segmentDirtyRect(previous, point))
+            } else {
+                needsDisplay = true
+            }
         case .arrow, .line, .rect:
             shapeCurrent = point
             needsDisplay = true
@@ -984,6 +1012,13 @@ final class OverlayView: NSView, NSTextViewDelegate {
         CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
     }
 
+    /// フリーハンドの1線分を再描画するための無効化矩形。
+    /// 線幅/2（丸キャップの張り出し）＋アンチエイリアス用の余白を見込む。
+    private func segmentDirtyRect(_ a: CGPoint, _ b: CGPoint) -> CGRect {
+        let inset = strokeWidth / 2 + 2
+        return rectBetween(a, b).insetBy(dx: -inset, dy: -inset)
+    }
+
     private func clampFontSize(_ size: CGFloat) -> CGFloat {
         min(max(size, 8), 200)
     }
@@ -1000,6 +1035,13 @@ final class TextEditorView: NSTextView {
     var onCommit: (() -> Void)?
     var onCancel: (() -> Void)?
     var onFontSizeChange: ((CGFloat) -> Void)?
+
+    /// テキスト編集の取り消しは、このビュー専用の UndoManager に閉じ込める。
+    /// ウィンドウ共有の UndoManager に登録すると、編集終了でビューを破棄した後も
+    /// 取り消し操作が残り、⌘Z で解放済みビューへ送信してクラッシュする（既知の不具合）。
+    /// 専用マネージャならビューと一緒に破棄され、残留しない。
+    private let ownUndoManager = UndoManager()
+    override var undoManager: UndoManager? { ownUndoManager }
 
     func configureWrapping(fixedWidth: CGFloat?, inset: CGFloat) {
         let huge = CGFloat.greatestFiniteMagnitude

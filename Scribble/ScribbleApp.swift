@@ -46,6 +46,12 @@ struct SimpleScreenScribbleApp: App {
                 NSApplication.shared.terminate(nil)
             }
         }
+        // 既定の Undo/Redo メニュー項目（⌘Z）を削除する。これが残っていると
+        // ⌘Z がメニュー経由で NSUndoManager に渡り、解放済みの編集ビューを
+        // 参照してクラッシュする。⌘Z はオーバーレイ側で直接処理する。
+        .commands {
+            CommandGroup(replacing: .undoRedo) { }
+        }
 
         Settings {
             SettingsView()

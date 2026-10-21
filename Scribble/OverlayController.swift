@@ -115,8 +115,14 @@ final class OverlayController {
         applyMode()
 
         if newMode == .drawing {
-            panels.first?.makeKeyAndOrderFront(nil)
+            // 先にアプリをアクティブ化してからキー化しないと、環境によっては
+            // パネルがキーになり切れず、最初のクリックが飲み込まれたり ⌘Z が
+            // 我々の keyDown に届かずクラッシュ経路へ抜けることがある。
             NSApp.activate(ignoringOtherApps: true)
+            if let first = panels.first {
+                first.makeKeyAndOrderFront(nil)
+                first.makeFirstResponder(first.overlayView)
+            }
             toolbarPanel.prepareForShow()
             toolbarPanel.orderFrontRegardless()
         } else {
