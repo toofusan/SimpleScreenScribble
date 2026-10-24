@@ -22,6 +22,9 @@ final class OverlayController {
     private var panels: [OverlayPanel] = []
     private lazy var toolbarPanel = ToolbarPanel()
 
+    /// コピー＆ペースト用の共有クリップボード（ディスプレイをまたいで貼り付けられる）
+    var clipboard: [Annotation] = []
+
     private init() {
         // ディスプレイ構成が変わったらパネルを作り直す
         NotificationCenter.default.addObserver(

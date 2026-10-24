@@ -94,6 +94,8 @@ final class OverlayView: NSView, NSTextViewDelegate {
     private var pendingTextEdit: (index: Int, caret: CGPoint)?
     private var selectDrag: SelectDrag = .none
     private var gestureSnapshot: [Annotation]?
+    /// 移動ドラッグ中に option が押されているか（押している間は元図形を開始位置にプレビュー表示する）
+    private var dragOption = false
     // 選択オブジェクトへの外観変更（色/不透明度/太さ）のUndoをまとめるためのフラグ
     private var appearanceEditActive = false
 
@@ -151,6 +153,14 @@ final class OverlayView: NSView, NSTextViewDelegate {
             AnnotationRenderer.draw(annotations, in: ctx, scale: 1)
             if let preview = previewAnnotation() {
                 AnnotationRenderer.draw([preview], in: ctx, scale: 1)
+            }
+            // option+ドラッグ中は、複製元を開始位置にプレビュー表示する
+            // （カーソル側が複製として残る）。
+            if dragOption, case let .move(_, originals) = selectDrag, let snapshot = gestureSnapshot {
+                let ghosts = originals.keys.sorted().compactMap {
+                    snapshot.indices.contains($0) ? snapshot[$0] : nil
+                }
+                AnnotationRenderer.draw(ghosts, in: ctx, scale: 1)
             }
         }
 
@@ -270,11 +280,29 @@ final class OverlayView: NSView, NSTextViewDelegate {
             return
         }
 
+        // ⌘⇧⌫ で全消去（ツールバーの全消去と同じ＝全ディスプレイ対象）
+        if editor == nil, event.modifierFlags.contains(.command),
+           event.modifierFlags.contains(.shift), event.keyCode == 51 {
+            OverlayController.shared.clearAll()
+            return
+        }
+
         // ⌘A で全選択（選択ツール）
         if editor == nil, event.modifierFlags.contains(.command), chars == "a", tool == .select {
             selection = Set(annotations.indices)
             needsDisplay = true
             return
+        }
+
+        // ⌘C / ⌘X / ⌘V でコピー・カット・ペースト
+        if editor == nil, event.modifierFlags.contains(.command) {
+            switch chars {
+            case "c": copySelection(); return
+            case "x": cutSelection(); return
+            case "v": paste(); return
+            case "d": duplicateSelection(); return
+            default: break
+            }
         }
 
         // 選択の削除
@@ -327,6 +355,19 @@ final class OverlayView: NSView, NSTextViewDelegate {
         addCursorRect(bounds, cursor: cursor)
     }
 
+    /// 移動ドラッグ中に option を押し／放ししたら、マウスを動かさなくても
+    /// プレビュー（複製元の表示）を更新する。
+    override func flagsChanged(with event: NSEvent) {
+        if case .move = selectDrag {
+            let option = event.modifierFlags.contains(.option)
+            if option != dragOption {
+                dragOption = option
+                needsDisplay = true
+            }
+        }
+        super.flagsChanged(with: event)
+    }
+
     // MARK: - Mouse
 
     override func mouseDown(with event: NSEvent) {
@@ -359,6 +400,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
     override func mouseDragged(with event: NSEvent) {
         guard !suppressStroke else { return }
         let point = convert(event.locationInWindow, from: nil)
+        dragOption = event.modifierFlags.contains(.option)
 
         // オブジェクトツール中でも選択編集が始まっていればそちらを優先。
         if isSelectDragging {
@@ -403,11 +445,13 @@ final class OverlayView: NSView, NSTextViewDelegate {
             selectDrag = .none
             marqueeRect = nil
             pendingTextEdit = nil
+            dragOption = false
         }
         if suppressStroke { return }
 
         let up = convert(event.locationInWindow, from: nil)
         let moved = hypot(up.x - downPoint.x, up.y - downPoint.y) > 4
+        let option = event.modifierFlags.contains(.option)
 
         // オブジェクトツール中でも選択編集が進行中ならそちらを確定させる。
         if isSelectDragging {
@@ -417,7 +461,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
                 beginEditingExisting(index: pending.index, caretAt: pending.caret)
                 return
             }
-            selectMouseUp(moved: moved)
+            selectMouseUp(moved: moved, option: option)
             return
         }
 
@@ -447,7 +491,7 @@ final class OverlayView: NSView, NSTextViewDelegate {
         case .text:
             textMouseUp(moved: moved)
         case .select:
-            selectMouseUp(moved: moved)
+            selectMouseUp(moved: moved, option: option)
         }
     }
 
@@ -595,9 +639,16 @@ final class OverlayView: NSView, NSTextViewDelegate {
         }
     }
 
-    private func selectMouseUp(moved: Bool) {
+    private func selectMouseUp(moved: Bool, option: Bool) {
         switch selectDrag {
-        case .move, .resize, .arrowEndpoint:
+        case let .move(_, originals):
+            // option を押したまま移動を終えたら、動かした分を複製として残す。
+            if moved && option {
+                finishMoveAsDuplicate(originals: originals)
+            } else {
+                commitGestureUndo(if: moved)
+            }
+        case .resize, .arrowEndpoint:
             commitGestureUndo(if: moved)
         case .marquee:
             if moved, let marquee = marqueeRect {
@@ -659,6 +710,78 @@ final class OverlayView: NSView, NSTextViewDelegate {
             }
         }
         selection = []
+    }
+
+    // MARK: - Copy / Cut / Paste
+
+    /// 貼り付け時にずらす量（右下へ少しずつ）。
+    private var pasteOffset: CGSize { CGSize(width: 16, height: -16) }
+
+    /// 選択中の注釈を共有クリップボードへ（描画順を保つ）。
+    private func copySelection() {
+        let items = selection.sorted().compactMap {
+            annotations.indices.contains($0) ? annotations[$0] : nil
+        }
+        guard !items.isEmpty else { return }
+        OverlayController.shared.clipboard = items
+    }
+
+    private func cutSelection() {
+        guard !selection.isEmpty else { return }
+        copySelection()
+        deleteSelection()
+    }
+
+    /// クリップボードの注釈を少しずらして複製し、貼り付けたものを選択状態にする。
+    private func paste() {
+        let items = OverlayController.shared.clipboard
+        guard !items.isEmpty else { return }
+        OverlayController.shared.noteActive(self)
+        let offset = pasteOffset
+        mutate {
+            let start = annotations.count
+            for item in items {
+                annotations.append(item.translated(by: offset))
+            }
+            selection = Set(start..<annotations.count)
+        }
+    }
+
+    /// 選択中の注釈を少しずらしてその場で複製し、複製側を選択状態にする（⌘D）。
+    private func duplicateSelection() {
+        let items = selection.sorted().compactMap {
+            annotations.indices.contains($0) ? annotations[$0] : nil
+        }
+        guard !items.isEmpty else { return }
+        let offset = pasteOffset
+        mutate {
+            let start = annotations.count
+            for item in items {
+                annotations.append(item.translated(by: offset))
+            }
+            selection = Set(start..<annotations.count)
+        }
+    }
+
+    /// option+ドラッグ複製：ドラッグ終了時に option が押されていたら、動かした分を複製として残し
+    /// 元の注釈はドラッグ開始位置へ戻す。判定は mouseUp 時点の option 状態で行うため、
+    /// ドラッグ途中から option を押しても有効。undo は複製前（gestureSnapshot）へ1手で戻せる。
+    private func finishMoveAsDuplicate(originals: [Int: Annotation]) {
+        guard let snapshot = gestureSnapshot else { return }
+        // 現在位置（移動後）の複製を控える。元の描画順を保つため index 昇順で。
+        let movedCopies = originals.keys.sorted().compactMap {
+            annotations.indices.contains($0) ? annotations[$0] : nil
+        }
+        annotations = snapshot                      // 元を開始位置・並びへ復元
+        let start = annotations.count
+        annotations.append(contentsOf: movedCopies) // 複製を末尾へ
+        selection = Set(start..<annotations.count)
+
+        undoStack.append(snapshot)
+        trimUndo()
+        redoStack.removeAll()
+        gestureSnapshot = nil
+        needsDisplay = true
     }
 
     // MARK: - Scroll（⌥+スクロールでテキストサイズ変更）
