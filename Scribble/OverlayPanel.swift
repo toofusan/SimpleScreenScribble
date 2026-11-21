@@ -473,6 +473,14 @@ final class OverlayView: NSView, NSTextViewDelegate {
             return
         }
 
+        // 選択ツールでなくても、動かさないクリックが既存オブジェクトに当たったら選択する。
+        // （V に切り替えずにクリックだけで選択できるように。ドラッグは従来どおり新規描画。）
+        if !moved, tool != .select, tool != .text, let index = annotationIndex(at: downPoint) {
+            selection = [index]
+            needsDisplay = true
+            return
+        }
+
         switch tool {
         case .pen:
             if moved && currentStroke.count > 1 {
