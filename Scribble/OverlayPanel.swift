@@ -335,6 +335,14 @@ final class OverlayView: NSView, NSTextViewDelegate {
         OverlayController.shared.hide()
     }
 
+    /// 素通しモードへ移るときなどに選択を解除する（バウンディングボックスを消す）
+    func clearSelection() {
+        if editor != nil { endEditing(commit: true) }
+        guard !selection.isEmpty else { return }
+        selection = []
+        needsDisplay = true
+    }
+
     func handleToolChanged() {
         if editor != nil { endEditing(commit: true) }
         selection = []

@@ -90,6 +90,9 @@ final class OverlayController {
     func redo() { targetOverlayView?.redo() }
     func clearAll() { overlayViews.forEach { $0.clear() } }
 
+    /// 全ディスプレイの選択を解除する（スクショ時にバウンディングボックスを写さないため）。
+    func clearSelection() { overlayViews.forEach { $0.clearSelection() } }
+
     /// 最後に操作されたディスプレイのビューを覚えておく（undo/redoの対象決定用）。
     /// マルチディスプレイでは常に最初のパネルがキーになるため、キーウィンドウ基準だと
     /// 別ディスプレイに描いたものを undo できない。

@@ -8,9 +8,12 @@
 //  flagsChanged（修飾キーの状態変化・文字情報なし）のグローバル監視はTCCの保護対象外で、
 //  入力監視/アクセシビリティいずれの権限も不要で動作する（文字キーの監視だけが権限を要する）。
 //
-//  検知する2つのコード（いずれも押し込んだ瞬間のエッジで1回発火）:
-//   - 左右Shift同時押し   → onDoubleShift
-//   - Ctrl+Shift 同時押し → onCtrlShift
+//  検知するコード（いずれも押し込んだ瞬間のエッジで1回発火）:
+//   - 左右Shift同時押し        → onDoubleShift
+//   - Ctrl+Shift 同時押し      → onCtrlShift
+//   - Cmd+Shift 同時押し       → onScreenshotChord
+//     （⌘⇧3/4=ファイル保存、⌘⇧⌃3/4=クリップボード、⌘⇧5=UI のスクショ時の修飾キー。
+//      文字キーの"4"等は無権限では見えないため、修飾キーの組み合わせで判定する）
 //
 
 import AppKit
@@ -35,13 +38,20 @@ final class HotkeyMonitor {
     // 各コードのエッジ検出用フラグ
     private var doubleShiftTriggered = false
     private var ctrlShiftTriggered = false
+    private var screenshotChordTriggered = false
 
     private let onDoubleShift: () -> Void
     private let onCtrlShift: () -> Void
+    private let onScreenshotChord: () -> Void
 
-    init(onDoubleShift: @escaping () -> Void, onCtrlShift: @escaping () -> Void) {
+    init(
+        onDoubleShift: @escaping () -> Void,
+        onCtrlShift: @escaping () -> Void,
+        onScreenshotChord: @escaping () -> Void
+    ) {
         self.onDoubleShift = onDoubleShift
         self.onCtrlShift = onCtrlShift
+        self.onScreenshotChord = onScreenshotChord
     }
 
     deinit {
@@ -108,6 +118,21 @@ final class HotkeyMonitor {
             }
         } else {
             ctrlShiftTriggered = false
+        }
+
+        // Cmd+Shift 同時押し（⌘⇧3/4=ファイル保存、⌘⇧⌃3/4=クリップボード、⌘⇧5=UIのスクショ）。
+        // Optは含まない。Ctrlは任意。文字キーは無権限では見えないため修飾キーの組み合わせで判定する。
+        let isScreenshotChord =
+            flags.contains(.command) &&
+            flags.contains(.shift) &&
+            !flags.contains(.option)
+        if isScreenshotChord {
+            if !screenshotChordTriggered {
+                screenshotChordTriggered = true
+                onScreenshotChord()
+            }
+        } else {
+            screenshotChordTriggered = false
         }
     }
 

@@ -64,7 +64,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // 修飾キーのみのホットキー監視（アクセシビリティ権限が必要）
     private lazy var hotkeyMonitor = HotkeyMonitor(
         onDoubleShift: { OverlayController.shared.toggleVisible() },      // 左右Shift：表示/非表示
-        onCtrlShift: { OverlayController.shared.toggleDrawPassthrough() } // Ctrl+Shift：描画/素通し切替
+        onCtrlShift: { OverlayController.shared.toggleDrawPassthrough() }, // Ctrl+Shift：描画/素通し切替
+        onScreenshotChord: { OverlayController.shared.clearSelection() }  // ⌘⇧⌃4/3：スクショ前に選択解除
     )
 
     func applicationDidFinishLaunching(_ notification: Notification) {
